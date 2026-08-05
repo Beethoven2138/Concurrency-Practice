@@ -1,3 +1,11 @@
+#pragma once
+
+#include <atomic>
+#include <iostream>
+#include <mutex>
+#include <thread>
+#include <condition_variable>
+
 class ZeroEvenOdd {
 private:
     int n;
