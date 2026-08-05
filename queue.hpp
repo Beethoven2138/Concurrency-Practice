@@ -18,25 +18,25 @@ class Queue{
     std::condition_variable cond_remove;
 public:
     Queue(){
-        arr = std::make_unique<T[]>(size);
+        arr = std::make_unique_for_overwrite<T[]>(size);
         current_length = 0;
     }
     Queue(std::initializer_list<T> entries){
-        arr = std::make_unique<T[]>(size);
+        arr = std::make_unique_for_overwrite<T[]>(size);
         if (entries.size() > size)
             throw std::runtime_error("Added too many entries into the queue");
         std::copy(entries.begin(), entries.end(), arr.get());
         current_length = entries.size();
     }
     Queue(const Queue<T, size> &cpy){
-        std::lock_guard<std::mutex> lock(cpy.mtx);
-        arr = std::make_unique<T[]>(size);
+        std::scoped_lock<std::mutex> lock(cpy.mtx);
+        arr = std::make_unique_for_overwrite<T[]>(size);
         current_length = cpy.current_length;
         std::copy(cpy.arr.get(), cpy.arr.get()+size, arr.get());
     }
     Queue<T, size>& operator = (const Queue<T, size> &cpy){
         if (&cpy != this){
-            std::scoped_lock lock(cpy.mtx, mtx);
+            std::scoped_lock<std::mutex> lock(cpy.mtx, mtx);
             arr = std::make_unique<T[]>(size);
             current_length = cpy.current_length;
             std::copy(cpy.arr.get(), cpy.arr.get()+size, arr.get());
@@ -44,14 +44,14 @@ public:
         return *this;
     }
     Queue(Queue<T, size> &&mv) noexcept {
-        std::scoped_lock lock(mv.mtx);
+        std::scoped_lock<std::mutex> lock(mv.mtx);
         arr = std::move(mv.arr);
         current_length = mv.current_length;
         mv.current_length = 0;
     }
     Queue<T, size>& operator = (Queue<T, size> &&mv) noexcept {
         if (&mv != this){
-            std::scoped_lock lock(mv.mtx, mtx);
+            std::scoped_lock<std::mutex> lock(mv.mtx, mtx);
             arr = std::move(mv.arr);
             current_length = mv.current_length;
             mv.current_length = 0;
